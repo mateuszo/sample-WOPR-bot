@@ -5,7 +5,7 @@ On your test/prod environment copy this file with a name secret.js and put your 
 */
 
 var secret = {
-	token: "<PUT TOKEN HERE>",
+	access_token: "<PUT TOKEN HERE>",
 	verify_token: "<PUT TOKEN HERE>"
 };
 
