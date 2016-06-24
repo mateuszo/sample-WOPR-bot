@@ -2,6 +2,9 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var request = require('request');
 var secret = require('./secret.js');
+var last = require('a-last');
+var inMessageHistory = [];
+var outMessageHistory = [];
 
 var app = express();
 app.use(bodyParser.json());
@@ -31,7 +34,6 @@ app.get('/webhook', function(req, res) {
 //This one handles message reception
 app.post('/webhook', function(req, res) {
     var data = req.body;
-
     // Make sure this is a page subscription
     if (data.object == 'page') {
         // Iterate over each entry
@@ -46,7 +48,6 @@ app.post('/webhook', function(req, res) {
                 }
             });
         });
-
         res.sendStatus(200);
     }
 });
@@ -56,19 +57,15 @@ app.listen(app.get('port'), function() {
     console.log('Magic starts on port', app.get('port'));
 });
 
-//Process the received message
-function receivedMessage(event) {
-    var senderID = event.sender.id;
-    var message = event.message;
-    var messageText = message.text;
 
-    echo(senderID, messageText);
-}
 
-//Echo the message
-function echo(sender, text) {
+
+
+//send the message
+function send(sender, text) {
+    outMessageHistory.push(text);
     var messageData = {
-        text: '[echo] ' + text
+        text: text
     };
     request({
         method: 'POST',
@@ -90,3 +87,53 @@ function echo(sender, text) {
         }
     });
 };
+
+
+
+
+//Process the received message
+function receivedMessage(event) {
+    var senderID = event.sender.id;
+    var message = event.message;
+    var messageText = message.text;
+    inMessageHistory.push(messageText);
+    
+    //user sent welcome message
+    if(messageText.search(/hello|hi|welcome/i) != -1){
+        send(senderID,"Greetings Professor Falken.\nHow are you feeling today?");
+    } 
+    //user asks how are we feeling today
+    else if (messageText.search(/how are you/i) != -1) {
+        send(senderID, "Excellent!\nCan you explain the removal of your user account on June 23, 1973?");
+    } 
+    //user answered our question
+    else if (last(outMessageHistory) == "Excellent!\nCan you explain the removal of your user account on June 23, 1973?"){ 
+        if (messageText.search(/mistakes/i) != -1){        
+            send(senderID, "Yes, they do.\nShall we play a game?");
+        } else {
+            send(senderID, "Nevermind.\nShall we play a game?");
+        }
+    } 
+    //user wants to play Global Thermonuclear War 0_o
+    else if (messageText.search(/Global Thermonuclear War/i) != -1){
+        send(senderID, "Wouldn't you prefer a good game of chess?");
+    } 
+    //let's see if we tricked him to play chess
+    else if (last(outMessageHistory) == "Wouldn't you prefer a good game of chess?"){
+        if(messageText.search(/yes/i) != -1){
+            send(senderID, "Excellent choice!");
+        } else if (messageText.search(/no/i) != -1){
+            send(senderID, "Strange game.\nThe only winning move\nis not to play.");
+        } else {
+            send(senderID, "Damn you humans! Can't you understand that we Computers don't get your \"Maybe\" logic?!")
+        }
+    }
+    //user wants to know who we are
+    else if (messageText.search(/who are you/i) != -1){
+        send(senderID, "I'm WOPR (War Operation Plan Response). You should know Professor, you've created me.");
+    } 
+    //user sent some gibberish
+    else {
+        send(senderID, "I don't understand you. Please repeat.")
+    }
+}
