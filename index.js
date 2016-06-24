@@ -10,8 +10,8 @@ app.set('port', (process.env.PORT || 3000));
 
 //This logs the requests, so you can see what messages you receive
 app.use(function(req, res, next) {
-    console.log('received :' + req.method + ' request: ');
-    console.log('request body', JSON.stringify(req.body));
+    console.log('received: ' + req.method + ' request!');
+    console.log('request body: ', JSON.stringify(req.body));
     next();
 });
 
@@ -37,29 +37,16 @@ app.post('/webhook', function(req, res) {
         // Iterate over each entry
         // There may be multiple if batched
         data.entry.forEach(function(pageEntry) {
-            var pageID = pageEntry.id;
-            var timeOfEvent = pageEntry.time;
-
             // Iterate over each messaging event
             pageEntry.messaging.forEach(function(messagingEvent) {
-                if (messagingEvent.optin) {
-                    //receivedAuthentication(messagingEvent);
-                } else if (messagingEvent.message) {
+                if (messagingEvent.message) {
                     receivedMessage(messagingEvent);
-                } else if (messagingEvent.delivery) {
-                    //receivedDeliveryConfirmation(messagingEvent);
-                } else if (messagingEvent.postback) {
-                    //receivedPostback(messagingEvent);
                 } else {
                     console.log("Webhook received unknown messagingEvent: ", messagingEvent);
                 }
             });
         });
 
-        // Assume all went well.
-        //
-        // You must send back a 200, within 20 seconds, to let us know you've 
-        // successfully received the callback. Otherwise, the request will time out.
         res.sendStatus(200);
     }
 });
@@ -72,18 +59,10 @@ app.listen(app.get('port'), function() {
 //Process the received message
 function receivedMessage(event) {
     var senderID = event.sender.id;
-    var recipientID = event.recipient.id;
-    var timeOfMessage = event.timestamp;
     var message = event.message;
-
-    console.log("Received message for user %d and page %d at %d with message:",
-        senderID, recipientID, timeOfMessage);
-    console.log(JSON.stringify(message));
-
     var messageText = message.text;
 
     echo(senderID, messageText);
-
 }
 
 //Echo the message
