@@ -3,6 +3,8 @@ var bodyParser = require('body-parser');
 var request = require('request');
 var secret = require('./secret.js');
 var last = require('a-last');
+
+//inbound and outbound message history arrays
 var inMessageHistory = [];
 var outMessageHistory = [];
 
@@ -42,7 +44,8 @@ app.post('/webhook', function(req, res) {
             // Iterate over each messaging event
             pageEntry.messaging.forEach(function(messagingEvent) {
                 if (messagingEvent.message) {
-                    receivedMessage(messagingEvent);
+                    // Finally process the message
+                    messageController(messagingEvent);
                 } else {
                     console.log("Webhook received unknown messagingEvent: ", messagingEvent);
                 }
@@ -63,6 +66,7 @@ app.listen(app.get('port'), function() {
 
 //send the message
 function send(sender, text) {
+    //put message to our message history
     outMessageHistory.push(text);
     var messageData = {
         text: text
@@ -92,11 +96,13 @@ function send(sender, text) {
 
 
 //Process the received message
-function receivedMessage(event) {
+function messageController(event) {
     var senderID = event.sender.id;
     var message = event.message;
     var messageText = message.text;
     inMessageHistory.push(messageText);
+    
+    //Here goes our bot logic
     
     //user sent welcome message
     if(messageText.search(/hello|hi|welcome/i) != -1){
@@ -130,7 +136,7 @@ function receivedMessage(event) {
     }
     //user wants to know who we are
     else if (messageText.search(/who are you/i) != -1){
-        send(senderID, "I'm WOPR (War Operation Plan Response). You should know Professor, you've created me.");
+        send(senderID, "I'm WOPR (War Operation Plan Response). You should know Professor, you programmed me.");
     } 
     //user sent some gibberish
     else {
