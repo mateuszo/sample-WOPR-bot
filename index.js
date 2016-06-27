@@ -32,7 +32,6 @@ app.get('/webhook', function(req, res) {
     }
 });
 
-
 //This one handles message reception
 app.post('/webhook', function(req, res) {
     var data = req.body;
@@ -61,10 +60,7 @@ app.listen(app.get('port'), function() {
 });
 
 
-
-
-
-//send the message
+//send the message - simple post request
 function send(sender, text) {
     //put message to our message history
     outMessageHistory.push(text);
@@ -103,6 +99,9 @@ function messageController(event) {
     inMessageHistory.push(messageText);
     
     //Here goes our bot logic
+    //It shouldn't be done this way in real life, but WOPR was built in the 70's.
+    //You should use state machine or some kind of bot framework.
+    //However this is a good example of a simple bot.
     
     //user sent welcome message
     if(messageText.search(/hello|hi|welcome/i) != -1){
