@@ -2,11 +2,11 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var request = require('request');
 var secret = require('./secret.js');
-var last = require('a-last');
+var MessageHistory = require('./message-history.js');
 
 //inbound and outbound message history arrays
-var inMessageHistory = [];
-var outMessageHistory = [];
+var inMessageHistory = new MessageHistory();
+var outMessageHistory = new MessageHistory();
 
 var app = express();
 app.use(bodyParser.json());
@@ -63,7 +63,8 @@ app.listen(app.get('port'), function() {
 //send the message - simple post request
 function send(sender, text) {
     //put message to our message history
-    outMessageHistory.push(text);
+    outMessageHistory.push(sender, text);
+    
     var messageData = {
         text: text
     };
@@ -96,12 +97,14 @@ function messageController(event) {
     var senderID = event.sender.id;
     var message = event.message;
     var messageText = message.text;
-    inMessageHistory.push(messageText);
+    inMessageHistory.push(senderID, messageText);
     
-    //Here goes our bot logic
-    //It shouldn't be done this way in real life, but WOPR was built in the 70's.
-    //You should use state machine or some kind of bot framework.
-    //However this is a good example of a simple bot.
+    /*
+    Here goes our bot logic.
+    It shouldn't be done this way in real life, but WOPR was built in the 70's.
+    You should use state machine or some kind of bot framework.
+    However this is a good example of a simple bot.
+    */
     
     //user sent welcome message
     if(messageText.search(/hello|hi|welcome/i) != -1){
@@ -112,7 +115,7 @@ function messageController(event) {
         send(senderID, "Excellent!\nCan you explain the removal of your user account on June 23, 1973?");
     } 
     //user answered our question
-    else if (last(outMessageHistory) == "Excellent!\nCan you explain the removal of your user account on June 23, 1973?"){ 
+    else if (outMessageHistory.last(senderID) == "Excellent!\nCan you explain the removal of your user account on June 23, 1973?"){ 
         if (messageText.search(/mistakes/i) != -1){        
             send(senderID, "Yes, they do.\nShall we play a game?");
         } else {
@@ -124,7 +127,7 @@ function messageController(event) {
         send(senderID, "Wouldn't you prefer a good game of chess?");
     } 
     //let's see if we tricked him to play chess
-    else if (last(outMessageHistory) == "Wouldn't you prefer a good game of chess?"){
+    else if (outMessageHistory.last(senderID) == "Wouldn't you prefer a good game of chess?"){
         if(messageText.search(/yes/i) != -1){
             send(senderID, "Excellent choice!");
         } else if (messageText.search(/no/i) != -1){
